@@ -36,4 +36,11 @@ TEST_CASE("PluginManager loads a freshly built shared-library plugin", "[plugin]
 
     CHECK(plugin->add(2, 40) == 42);
     CHECK(plugin->answer() == 42);
+
+    // Plugins are identified by name alone, but version metadata is still
+    // reported via getInfo().
+    plugini::PluginInfo info;
+    plugin->getInfo(info);
+    CHECK(info.name == "test_plugin");
+    CHECK(info.version == "0.1.0");
 }

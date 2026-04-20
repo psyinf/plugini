@@ -61,7 +61,11 @@ struct PluginInfo
     std::string name;
     std::string version;
 
-    auto operator<=>(const PluginInfo&) const = default;
+    // Plugins are identified by name alone; the version is metadata. This keeps
+    // PluginManager lookups (std::map keyed on PluginInfo) working when callers
+    // only know the plugin's name.
+    auto operator<=>(const PluginInfo& other) const { return name <=> other.name; }
+    bool operator==(const PluginInfo& other) const { return name == other.name; }
 };
 
 class PluginBase

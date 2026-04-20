@@ -6,9 +6,7 @@ extern "C" {
 void getInfo(plugini::PluginInfo& info)
 {
     info.name    = "test_plugin";
-    // NOTE: PluginManager::getPlugin(name) compares full PluginInfo including
-    // version, so we leave it empty to allow lookup by name alone.
-    info.version = "";
+    info.version = "0.1.0";
 }
 
 int add(int a, int b)
