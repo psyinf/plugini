@@ -2,6 +2,7 @@
 
 #include <plugini/StringUtils.hpp>
 
+#include <algorithm>
 #include <filesystem>
 #include <iostream>
 #include <map>

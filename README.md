@@ -7,9 +7,6 @@ A tiny, header-light C++23 plugin/DLL loading library. Provides:
 - `plugini::PluginManager<Base, Info>` — scans a directory, instantiates plugins matching a wildcard filter,
   calls `getInfo`, and deduplicates by `PluginInfo`.
 
-Structure is modeled after [psyinf/prototools](https://github.com/psyinf/prototools): standalone CMake project,
-CPM-managed dependencies (`fmt`, `spdlog`, `Catch2`), and a `libs/` + `tests/` layout.
-
 ## Building
 
 ```bash
@@ -224,4 +221,4 @@ Things to watch out for:
 
 ## License
 
-TBD — add a `LICENSE` file before publishing.
+Released under the [MIT License](LICENSE).
