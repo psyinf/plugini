@@ -24,28 +24,5 @@ target_include_directories(${PROJECT_NAME}
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
     PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
-        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+        ${CMAKE_CURRENT_SOURCE_DIR}/..
 )
-
-if(PLUGINI_INSTALL)
-    include(CMakePackageConfigHelpers)
-
-    install(TARGETS ${PROJECT_NAME}
-        EXPORT pluginiTargets
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    )
-    install(FILES
-            PluginBase.hpp
-            PluginManager.hpp
-            StringUtils.hpp
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/plugini
-    )
-    install(EXPORT pluginiTargets
-        FILE pluginiTargets.cmake
-        NAMESPACE plugini::
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/plugini
-    )
-endif()
