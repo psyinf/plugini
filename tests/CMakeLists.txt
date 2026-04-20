@@ -23,7 +23,9 @@ if(BUILD_TESTING)
     target_compile_features(${test_target} PUBLIC cxx_std_23)
     target_link_libraries(${test_target} PRIVATE testMain plugini::plugini)
     target_compile_definitions(${test_target} PRIVATE
-        PLUGINI_TESTS_PLUGIN_DIR="${PLUGINI_TESTS_PLUGIN_DIR}"
+        # Use TARGET_FILE_DIR so the path resolves correctly with multi-config
+        # generators (Visual Studio, Xcode) that append a per-config subdir.
+        PLUGINI_TESTS_PLUGIN_DIR="$<TARGET_FILE_DIR:test_plugin>"
     )
     # Ensure the test plugin is built before the test executable runs.
     add_dependencies(${test_target} test_plugin)
