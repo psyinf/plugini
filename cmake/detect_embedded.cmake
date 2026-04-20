@@ -1,0 +1,7 @@
+if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+    set(IS_STANDALONE_PROJECT TRUE)
+    message(STATUS "plugini: standalone project")
+else()
+    set(IS_STANDALONE_PROJECT FALSE)
+    message(STATUS "plugini: embedded project")
+endif()
