@@ -10,7 +10,6 @@ include(cmake/detect_embedded.cmake)
 
 option(PLUGINI_ENABLE_TESTING  "Enable tests"    ON)
 option(PLUGINI_BUILD_EXAMPLES  "Build examples"  ${IS_STANDALONE_PROJECT})
-option(PLUGINI_INSTALL         "Generate install rules" ${IS_STANDALONE_PROJECT})
 
 include(cmake/PreventInSourceBuilds.cmake)
 if(IS_STANDALONE_PROJECT)
