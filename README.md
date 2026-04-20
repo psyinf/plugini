@@ -7,9 +7,6 @@ A tiny, header-light C++23 plugin/DLL loading library. Provides:
 - `plugini::PluginManager<Base, Info>` — scans a directory, instantiates plugins matching a wildcard filter,
   calls `getInfo`, and deduplicates by `PluginInfo`.
 
-Structure is modeled after [psyinf/prototools](https://github.com/psyinf/prototools): standalone CMake project,
-CPM-managed dependencies (`fmt`, `spdlog`, `Catch2`), and a `libs/` + `tests/` layout.
-
 ## Building
 
 ```bash
@@ -24,7 +21,6 @@ Standalone build options:
 | ------------------------ | ------- | ------------------------------------- |
 | `PLUGINI_ENABLE_TESTING` | `ON`    | Build Catch2-based unit tests         |
 | `PLUGINI_BUILD_EXAMPLES` | `ON`*   | Build the `examples/` host + plugin   |
-| `PLUGINI_INSTALL`        | `ON`*   | Generate `install()` rules            |
 | `ENABLE_COVERAGE`        | `OFF`   | GCC/Clang `--coverage` instrumentation |
 
 \* Only `ON` by default when built as the top-level (standalone) project.
@@ -138,6 +134,91 @@ The host is configured at build time with the path to
 `build/examples/plugins/`, where the example DLL is placed, so it works with no
 arguments. You can also pass a different directory as the first argument.
 
+## Debug vs. release plugins (`_d` suffix convention)
+
+Debug and release binaries usually have an incompatible C++ ABI (different
+iterator debug levels, different `_ITERATOR_DEBUG_LEVEL`, different STL
+layouts, etc.). Loading a release plugin into a debug host — or vice versa —
+will silently corrupt memory.
+
+`PluginManager` supports a simple convention to let debug and release plugins
+coexist in a single directory:
+
+- Debug plugins must have a file stem ending in `_d`, e.g. `my_plugin_d.dll`.
+- Release plugins must **not** end in `_d`, e.g. `my_plugin.dll`.
+
+At scan time the manager behaves as follows:
+
+| Host build                                      | `my_plugin.dll` | `my_plugin_d.dll` |
+| ----------------------------------------------- | --------------- | ----------------- |
+| Release (default)                               | ✅ loaded       | ❌ skipped        |
+| Debug + `-DPLUGIN_MANAGER_USE_DEBUG_SUFFIX`     | ❌ skipped      | ✅ loaded         |
+
+Enable the debug-side behavior with:
+
+```cmake
+target_compile_definitions(my_host PRIVATE
+    $<$<CONFIG:Debug>:PLUGIN_MANAGER_USE_DEBUG_SUFFIX>
+)
+```
+
+Make sure your debug plugin's CMake target also appends the `_d` suffix, e.g.
+`set_target_properties(my_plugin PROPERTIES DEBUG_POSTFIX "_d")`.
+
+## Passing C++ types across the plugin boundary
+
+The plugin ABI is `extern "C"` only for **symbol names** — it does not convert
+C++ types to anything C-compatible. Functions may still take and return C++
+types (references, `std::vector`, `std::unique_ptr`, polymorphic base
+classes, …). This works as long as the host and the plugin are built with the
+same compiler, standard library, CRT and build configuration.
+
+A working pattern (see `tests/HelloSayerTests.cpp`):
+
+```cpp
+// shared header (host + plugin both include this)
+class HelloSayer {
+public:
+    virtual ~HelloSayer() = default;          // REQUIRED: dtor must be virtual
+    virtual std::string say() const = 0;
+};
+```
+
+```cpp
+// plugin: a local derived class is never named outside the DLL
+namespace {
+class PluginSayer : public HelloSayer {
+    std::string say() const override { return "hello from plugin"; }
+};
+} // namespace
+
+extern "C" PLUGINI_API
+void registerSayers(std::vector<std::unique_ptr<HelloSayer>>& sayers) {
+    sayers.emplace_back(std::make_unique<PluginSayer>());
+}
+```
+
+```cpp
+// host side
+std::vector<std::unique_ptr<HelloSayer>> sayers;
+plugin->registerSayers(sayers);               // plugin appends its instance
+// ~unique_ptr<HelloSayer>() dispatches through the virtual dtor back
+// into the plugin's ~PluginSayer().
+```
+
+Things to watch out for:
+
+- **Virtual destructor.** The owning `unique_ptr` lives in the host, but the
+  concrete type lives in the plugin; deletion must go through the vtable.
+- **No mixing compilers / CRTs.** MSVC vs. Clang, `/MT` vs. `/MD`, libstdc++
+  vs. libc++ — any of these mismatched between host and plugin is undefined
+  behavior for types like `std::vector` or `std::string`.
+- **Same build configuration.** Do not mix a Release host with a Debug
+  plugin; see the `_d` suffix section above.
+- **Plugin lifetime.** Keep the `PluginBase` instance alive as long as any
+  object it handed out is still referenced, otherwise the DLL may be unloaded
+  under the object's feet.
+
 ## License
 
-TBD — add a `LICENSE` file before publishing.
+Released under the [MIT License](LICENSE).

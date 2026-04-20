@@ -8,20 +8,6 @@
 #include <filesystem>
 #include <string>
 
-namespace {
-
-// Pick the right shared-library wildcard for the current platform.
-constexpr const char* kPluginFilter =
-#if defined(_WIN32)
-    "*.dll";
-#elif defined(__APPLE__)
-    "*.dylib";
-#else
-    "*.so";
-#endif
-
-} // namespace
-
 int main(int argc, char* argv[])
 {
     spdlog::set_level(spdlog::level::debug);
@@ -37,7 +23,7 @@ int main(int argc, char* argv[])
     }
 
     plugini::PluginManager<HelloPluginClient, plugini::PluginInfo> manager;
-    const auto loaded = manager.scanForPlugins(pluginDir, kPluginFilter);
+    const auto loaded = manager.scanForPlugins(pluginDir, std::string{plugini::defaultPluginFilter});
     spdlog::info("Registered {} plugin(s)", loaded);
 
     // Now that plugins are registered, look one up by name and invoke its exports.
