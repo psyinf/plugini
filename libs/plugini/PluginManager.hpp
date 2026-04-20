@@ -8,12 +8,23 @@
 #include <memory>
 #include <ranges>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include <fmt/core.h>
 #include <spdlog/spdlog.h>
 
 namespace plugini {
+
+// Default wildcard filter for the shared-library flavor of the host platform.
+// Useful as the second argument to PluginManager::scanForPlugins().
+#if defined(_WIN32)
+inline constexpr std::string_view kDefaultPluginFilter = "*.dll";
+#elif defined(__APPLE__)
+inline constexpr std::string_view kDefaultPluginFilter = "*.dylib";
+#else
+inline constexpr std::string_view kDefaultPluginFilter = "*.so";
+#endif
 
 template <class PluginBaseClass, class PluginInfoType>
 class PluginManager

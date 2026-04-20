@@ -7,19 +7,6 @@
 #include <filesystem>
 #include <string>
 
-namespace {
-
-constexpr const char* kPluginFilter =
-#if defined(_WIN32)
-    "*.dll";
-#elif defined(__APPLE__)
-    "*.dylib";
-#else
-    "*.so";
-#endif
-
-} // namespace
-
 TEST_CASE("PluginManager loads a freshly built shared-library plugin", "[plugin][integration]")
 {
     const std::string pluginDir = PLUGINI_TESTS_PLUGIN_DIR;
@@ -27,7 +14,7 @@ TEST_CASE("PluginManager loads a freshly built shared-library plugin", "[plugin]
     REQUIRE(std::filesystem::exists(pluginDir));
 
     plugini::PluginManager<TestPluginClient, plugini::PluginInfo> manager;
-    const auto loaded = manager.scanForPlugins(pluginDir, kPluginFilter);
+    const auto loaded = manager.scanForPlugins(pluginDir, std::string{plugini::kDefaultPluginFilter});
 
     REQUIRE(loaded >= 1);
 
