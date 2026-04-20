@@ -10,6 +10,8 @@ target_link_libraries(${PROJECT_NAME} PRIVATE plugini::plugini)
 target_include_directories(${PROJECT_NAME}
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/..    # access to HelloSayer.hpp shared with the tests
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES

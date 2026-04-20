@@ -14,6 +14,11 @@
 
 #include <plugini/PluginBase.hpp>
 
+#include <memory>
+#include <vector>
+
+#include "HelloSayer.hpp"
+
 extern "C" {
 
 // Required by plugini::PluginBase: fills in name/version.
@@ -22,5 +27,10 @@ PLUGINI_TEST_PLUGIN_API void getInfo(plugini::PluginInfo& info);
 // Test entry points.
 PLUGINI_TEST_PLUGIN_API int  add(int a, int b);
 PLUGINI_TEST_PLUGIN_API int  answer();
+
+// Appends plugin-owned HelloSayer instances to a host-provided vector.
+// Demonstrates passing a C++ type by reference across the DLL boundary and
+// transferring ownership of polymorphic objects via std::unique_ptr.
+PLUGINI_TEST_PLUGIN_API void registerSayers(std::vector<std::unique_ptr<HelloSayer>>& sayers);
 
 } // extern "C"
