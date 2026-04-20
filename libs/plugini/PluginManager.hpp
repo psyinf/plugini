@@ -19,16 +19,23 @@ namespace plugini {
 // Default wildcard filter for the shared-library flavor of the host platform.
 // Useful as the second argument to PluginManager::scanForPlugins().
 #if defined(_WIN32)
-inline constexpr std::string_view kDefaultPluginFilter = "*.dll";
+inline constexpr std::string_view defaultPluginFilter = "*.dll";
 #elif defined(__APPLE__)
-inline constexpr std::string_view kDefaultPluginFilter = "*.dylib";
+inline constexpr std::string_view defaultPluginFilter = "*.dylib";
 #else
-inline constexpr std::string_view kDefaultPluginFilter = "*.so";
+inline constexpr std::string_view defaultPluginFilter = "*.so";
 #endif
 
 template <class PluginBaseClass, class PluginInfoType>
 class PluginManager
 {
+    // Debug/release plugins can coexist in the same directory by using a
+    // trailing "_d" in the file stem for debug builds (e.g. "myplugin_d.dll"
+    // vs. "myplugin.dll"). When the host is compiled in Debug AND opts in via
+    // -DPLUGIN_MANAGER_USE_DEBUG_SUFFIX, scanForPlugins() only loads files
+    // whose stem ends in "_d"; otherwise it skips them. This keeps ABI-
+    // incompatible debug DLLs from being accidentally loaded by a release host
+    // (and vice versa).
     static constexpr bool isDebug()
     {
         bool is_debug = false;

@@ -23,7 +23,7 @@ int main(int argc, char* argv[])
     }
 
     plugini::PluginManager<HelloPluginClient, plugini::PluginInfo> manager;
-    const auto loaded = manager.scanForPlugins(pluginDir, std::string{plugini::kDefaultPluginFilter});
+    const auto loaded = manager.scanForPlugins(pluginDir, std::string{plugini::defaultPluginFilter});
     spdlog::info("Registered {} plugin(s)", loaded);
 
     // Now that plugins are registered, look one up by name and invoke its exports.

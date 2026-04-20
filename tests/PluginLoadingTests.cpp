@@ -14,7 +14,7 @@ TEST_CASE("PluginManager loads a freshly built shared-library plugin", "[plugin]
     REQUIRE(std::filesystem::exists(pluginDir));
 
     plugini::PluginManager<TestPluginClient, plugini::PluginInfo> manager;
-    const auto loaded = manager.scanForPlugins(pluginDir, std::string{plugini::kDefaultPluginFilter});
+    const auto loaded = manager.scanForPlugins(pluginDir, std::string{plugini::defaultPluginFilter});
 
     REQUIRE(loaded >= 1);
 
