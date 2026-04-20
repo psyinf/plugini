@@ -1,4 +1,3 @@
-#define PLUGINI_HELLO_BUILDING
 #include "HelloPluginApi.hpp"
 
 #include <cstdio>

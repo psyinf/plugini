@@ -36,7 +36,7 @@ static std::string FormatErrorMessage(const DWORD errorCode)
 static plugini::PluginBase::DLLHandle LoadSharedLibrary(std::string_view libraryPath, [[maybe_unused]] int iMode = 2)
 {
 #if defined(_MSC_VER) // Microsoft compiler
-    return static_cast<HMODULE>(LoadLibraryEx(libraryPath.data(), nullptr, 0x0));
+    return static_cast<void*>(LoadLibraryEx(libraryPath.data(), nullptr, 0x0));
 #elif defined(__linux__)
     return dlopen(libraryPath.data(), iMode);
 #endif
@@ -87,7 +87,7 @@ void plugini::PluginBase::getInfo(PluginInfo& info) const
 
 plugini::PluginBase::~PluginBase()
 {
-    if (dllHandle.has_value())
+    if (dllHandle)
     {
         PluginInfo info;
         getInfo(info);
@@ -101,19 +101,20 @@ plugini::PluginBase::~PluginBase()
             spdlog::debug("Unloading plugin '{}'\n", info.name);
 
 #ifdef _WIN32
-            ::FreeLibrary(std::any_cast<HMODULE>(dllHandle));
+            ::FreeLibrary(static_cast<HMODULE>(dllHandle));
 #elif __linux__
-            dlclose(std::any_cast<void*>(dllHandle));
+            dlclose(dllHandle);
 #endif
+            dllHandle = nullptr;
         }
     }
 }
 
-void* plugini::PluginBase::_getFunction(const DLLHandle& handle, std::string_view name)
+void* plugini::PluginBase::_getFunction(DLLHandle handle, std::string_view name)
 {
 #if defined(_MSC_VER) // Microsoft compiler
-    return ::GetProcAddress(std::any_cast<HINSTANCE>(handle), name.data());
+    return ::GetProcAddress(static_cast<HMODULE>(handle), name.data());
 #elif __linux__
-    return dlsym(std::any_cast<void*>(handle), name.data());
+    return dlsym(handle, name.data());
 #endif
 }

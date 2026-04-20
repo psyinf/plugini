@@ -1,16 +1,59 @@
 #pragma once
 
-#include <any>
 #include <functional>
 #include <string>
 
-#ifdef _WIN32
-    #define PLUGIN_API __declspec(dllexport)
-#elif __linux__
-    #define PLUGIN_API
+// -----------------------------------------------------------------------------
+// Symbol visibility / DLL import-export helpers
+//
+// A plugini plugin is a shared library (DLL / .so / .dylib) that exports a
+// small C ABI (`getInfo`, plus whatever else the plugin offers). Plugin
+// authors tag those exported functions with one of the macros below.
+//
+// Usage patterns:
+//
+//   1. Simple single-plugin case (recommended):
+//        // in the plugin's build system:
+//        //   target_compile_definitions(my_plugin PRIVATE PLUGINI_PLUGIN_BUILDING)
+//        // in the plugin's API header:
+//        extern "C" PLUGINI_API void getInfo(plugini::PluginInfo&);
+//
+//      When the plugin is being built, PLUGINI_API expands to an *export*
+//      directive. When the same header is included by code that just wants
+//      to consume the plugin via its API header, it expands to *import*.
+//
+//   2. Per-plugin macro (recommended when a single translation unit may
+//      include API headers from more than one plugin):
+//        #if defined(MY_PLUGIN_BUILDING)
+//            #define MY_PLUGIN_API PLUGINI_EXPORT
+//        #else
+//            #define MY_PLUGIN_API PLUGINI_IMPORT
+//        #endif
+// -----------------------------------------------------------------------------
+
+#if defined(_WIN32)
+    #define PLUGINI_EXPORT __declspec(dllexport)
+    #define PLUGINI_IMPORT __declspec(dllimport)
+#elif defined(__GNUC__) || defined(__clang__)
+    #define PLUGINI_EXPORT __attribute__((visibility("default")))
+    #define PLUGINI_IMPORT __attribute__((visibility("default")))
+#else
+    #define PLUGINI_EXPORT
+    #define PLUGINI_IMPORT
 #endif
 
-namespace plugini {
+#if defined(PLUGINI_PLUGIN_BUILDING)
+    #define PLUGINI_API PLUGINI_EXPORT
+#else
+    #define PLUGINI_API PLUGINI_IMPORT
+#endif
+
+// Backwards-compatible alias for the previous (export-only) macro.
+// Deprecated: prefer PLUGINI_API.
+#define PLUGIN_API PLUGINI_EXPORT
+
+namespace plugini
+{
 
 struct PluginInfo
 {

@@ -1,30 +1,22 @@
 #pragma once
 
-// Shared C ABI between a plugini plugin DLL and the host.
-// Both sides include this header; the DLL compiles with PLUGINI_HELLO_BUILDING
-// defined so that symbols are exported.
+// Shared C ABI between a plugini plugin DLL and any code that wants to link
+// against it through this header. The DLL's build system defines
+// PLUGINI_PLUGIN_BUILDING on the plugin target, so PLUGINI_API resolves to an
+// *export* there; everywhere else it resolves to *import* (or to a default
+// visibility attribute on non-Windows).
 
-#if defined(_WIN32)
-    #if defined(PLUGINI_HELLO_BUILDING)
-        #define PLUGINI_HELLO_API __declspec(dllexport)
-    #else
-        #define PLUGINI_HELLO_API __declspec(dllimport)
-    #endif
-#else
-    #define PLUGINI_HELLO_API __attribute__((visibility("default")))
-#endif
-
-#include <plugini/PluginBase.hpp> // for plugini::PluginInfo
+#include <plugini/PluginBase.hpp> // provides PLUGINI_API and plugini::PluginInfo
 
 extern "C" {
 
 // Required by plugini::PluginBase: fills in name/version.
-PLUGINI_HELLO_API void getInfo(plugini::PluginInfo& info);
+PLUGINI_API void getInfo(plugini::PluginInfo& info);
 
 // The hello-world entry point we want to call after loading.
-PLUGINI_HELLO_API void sayHello();
+PLUGINI_API void sayHello();
 
 // Example of a function returning a trivially-copyable value.
-PLUGINI_HELLO_API int add(int a, int b);
+PLUGINI_API int add(int a, int b);
 
 } // extern "C"
