@@ -33,15 +33,6 @@ static std::string FormatErrorMessage(const DWORD errorCode)
 
 // #TODO: explore modes and try to match flags to unify interface here
 
-static plugini::PluginBase::DLLHandle LoadSharedLibrary(std::string_view libraryPath, [[maybe_unused]] int iMode = 2)
-{
-#if defined(_MSC_VER) // Microsoft compiler
-    return static_cast<HMODULE>(LoadLibraryEx(libraryPath.data(), nullptr, 0x0));
-#elif defined(__linux__)
-    return dlopen(libraryPath.data(), iMode);
-#endif
-}
-
 static std::string getLastErrorString()
 {
 #if defined(_MSC_VER) // Microsoft compiler
@@ -60,13 +51,21 @@ static std::string getLastErrorString()
 plugini::PluginBase::PluginBase(const std::string& path)
   : path(path)
 {
-    auto handle = LoadSharedLibrary(path);
+    // Keep the platform-specific OS handle local so we can simply check it
+    // against 0/nullptr; it is wrapped into the DLLHandle (std::any) only
+    // once the load has succeeded.
+#if defined(_WIN32)
+    HMODULE handle = LoadLibraryEx(path.data(), nullptr, 0x0);
+#elif defined(__linux__)
+    void*   handle = dlopen(path.data(), RTLD_NOW);
+#endif
 
-    if (!handle.has_value())
+    if (!handle)
     {
         auto last_err_str = getLastErrorString();
         throw std::invalid_argument(fmt::format("Could not load '{}'.\nError reported: {}", path, last_err_str));
     }
+
     // TODO: move to generic list or use introspection
     getInfoFunction = bindFunction<void, PluginInfo&>(handle, std::string("getInfo"));
     if (!getInfoFunction) { reportMissingInterface(path, "getInfo"); }
@@ -105,6 +104,7 @@ plugini::PluginBase::~PluginBase()
 #elif __linux__
             dlclose(std::any_cast<void*>(dllHandle));
 #endif
+            dllHandle.reset();
         }
     }
 }
@@ -112,7 +112,7 @@ plugini::PluginBase::~PluginBase()
 void* plugini::PluginBase::_getFunction(const DLLHandle& handle, std::string_view name)
 {
 #if defined(_MSC_VER) // Microsoft compiler
-    return ::GetProcAddress(std::any_cast<HINSTANCE>(handle), name.data());
+    return ::GetProcAddress(std::any_cast<HMODULE>(handle), name.data());
 #elif __linux__
     return dlsym(std::any_cast<void*>(handle), name.data());
 #endif

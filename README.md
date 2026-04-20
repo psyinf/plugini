@@ -67,10 +67,53 @@ manager.scanForPlugins("./plugins", "*.dll");
 Each plugin shared library must export at minimum a C function:
 
 ```cpp
-extern "C" PLUGIN_API void getInfo(plugini::PluginInfo& info) {
+#include <plugini/PluginBase.hpp>
+
+extern "C" PLUGINI_API void getInfo(plugini::PluginInfo& info) {
     info.name    = "example";
     info.version = "1.0.0";
 }
+```
+
+## Exporting symbols from a plugin
+
+`<plugini/PluginBase.hpp>` provides three macros for tagging exported functions
+so the right `__declspec(dll...)` / visibility attribute is emitted on every
+supported platform:
+
+| Macro            | Expands to                                                           |
+| ---------------- | -------------------------------------------------------------------- |
+| `PLUGINI_EXPORT` | `__declspec(dllexport)` on MSVC, `__attribute__((visibility("default")))` elsewhere |
+| `PLUGINI_IMPORT` | `__declspec(dllimport)` on MSVC, `__attribute__((visibility("default")))` elsewhere |
+| `PLUGINI_API`    | `PLUGINI_EXPORT` when `PLUGINI_PLUGIN_BUILDING` is defined, else `PLUGINI_IMPORT` |
+
+Recommended pattern for a single plugin:
+
+```cmake
+# plugin/CMakeLists.txt
+add_library(my_plugin SHARED my_plugin.cpp)
+target_link_libraries(my_plugin PRIVATE plugini::plugini)
+target_compile_definitions(my_plugin PRIVATE PLUGINI_PLUGIN_BUILDING)
+```
+
+```cpp
+// plugin/my_plugin_api.hpp — included by the plugin and (optionally) by any host
+// that wants to link through the header instead of GetProcAddress.
+#include <plugini/PluginBase.hpp>
+
+extern "C" PLUGINI_API void getInfo(plugini::PluginInfo&);
+extern "C" PLUGINI_API int  doWork(int);
+```
+
+If a single translation unit may include API headers from more than one plugin,
+give each plugin its own macro pair instead of using the shared `PLUGINI_API`:
+
+```cpp
+#if defined(MY_PLUGIN_BUILDING)
+    #define MY_PLUGIN_API PLUGINI_EXPORT
+#else
+    #define MY_PLUGIN_API PLUGINI_IMPORT
+#endif
 ```
 
 ## Example
