@@ -1,0 +1,7 @@
+# Code owners for plugini
+# Docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-security/customizing-your-repository/about-code-owners
+#
+# Each line is a file pattern followed by one or more owners.
+# The last matching pattern takes precedence.
+
+* @psyinf
